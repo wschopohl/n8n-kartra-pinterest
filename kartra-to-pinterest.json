@@ -1,0 +1,348 @@
+{
+  "name": "Karta to Pinterest Template",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "",
+        "options": {}
+      },
+      "id": "99584438-f4b2-4e5d-9659-db78c9d6744e",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        500
+      ],
+      "webhookId": "c24ec7aa-2ed0-45bd-97f4-d081f74bd332"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json[\"kartra\"][\"action\"] }}",
+              "value2": "=assign_tag"
+            },
+            {
+              "value1": "={{ $json[\"kartra\"][\"action_details\"][\"tag\"][\"tag_name\"] }}",
+              "value2": "={{ $json[\"settings\"][\"tag\"] }}"
+            }
+          ]
+        }
+      },
+      "id": "424ffdaf-d449-4f55-a16b-ec3059b0e015",
+      "name": "IF",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        260,
+        480
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "637aa23e-cdde-4a6d-8daa-a5427034feea",
+      "name": "No Operation, do nothing",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        480,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.pinterest.com/v5/ad_accounts/{{ $json[\"settings\"][\"account_id\"] }}/events",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "test",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json[\"settings\"][\"access_token\"] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "data",
+              "value": "={{ $json[\"pindata\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bae22e9f-2a5f-4df6-ada8-7875f6cef42f",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        840,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json.kartra.lead\n\nconst pindata = { \"data\": [\n    {\n      \"event_name\": \"lead\",\n      \"action_source\": \"web\",\n      \"event_time\": Math.floor(Date.now() / 1000),\n      \"event_id\": \"knl_\"+ lead.id,\n      \"event_source_url\": \"https://app.kartra.com/\",\n      \"opt_out\": false,\n      \"partner_name\": \"string\",\n      \"user_data\": {\n        \"em\": [\n          lead.email,\n        ]\n      }\n    }\n  ]\n}\n\n$input.first().json.pindata = pindata.data\n\nreturn $input.all()\n"
+      },
+      "id": "e8851174-7972-4581-80c7-648923771562",
+      "name": "GenPinData",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        480,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const kartradata = $input.first().json.body\nreturn { kartra: kartradata }"
+      },
+      "id": "efa9d2fb-b08c-4178-9bc7-b538c25724f9",
+      "name": "Extract Body",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        500
+      ]
+    },
+    {
+      "parameters": {
+        "type": "SHA256",
+        "value": "={{ $json[\"pindata\"][0][\"user_data\"][\"em\"][0] }}",
+        "dataPropertyName": "pindata[0].user_data.em[0]"
+      },
+      "id": "5f97ff7f-d707-4a2b-a268-62ef2b735682",
+      "name": "HashEMail",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 1,
+      "position": [
+        660,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "28316b3f-defa-4a0f-abc7-e32c1e34ac8d",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2,
+      "position": [
+        60,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return({settings: {\n\n  tag: \"<Tag Name>\",\n  account_id: \"<Account Id>\",\n  access_token: \"<Access Token>\"\n\n}})"
+      },
+      "id": "bee2baba-35c0-4be7-99d5-cc8e1a17b558",
+      "name": "Settings",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        180
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## ReadMe\n\nDouble Click on \"Settings\" node and change your values",
+        "width": 234.0275650842271
+      },
+      "id": "a3ee08df-b837-4a84-a10d-d729d4a565b4",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -420,
+        120
+      ]
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.annonci.de",
+            "content-length": "848",
+            "accept": "*/*",
+            "content-type": "application/json",
+            "x-forwarded-for": "54.84.187.89",
+            "x-forwarded-host": "n8n.annonci.de",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "ae79112fa6a2",
+            "x-real-ip": "54.84.187.89",
+            "accept-encoding": "gzip"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "action": "assign_tag",
+            "action_details": {
+              "tag": {
+                "tag_id": "1",
+                "tag_name": "testTag"
+              }
+            },
+            "lead": {
+              "id": "2",
+              "first_name": "",
+              "middle_name": "",
+              "last_name": "",
+              "last_name2": "",
+              "company": "",
+              "sales_tax_id": "",
+              "email": "w.schopohl@gmail.com",
+              "username": "wschopoh8b867a71",
+              "date_joined": "2023-02-02 10:37:47",
+              "phone_country_code": "",
+              "phone": "",
+              "ip": "",
+              "address": "",
+              "zip": "",
+              "city": "",
+              "state": "",
+              "country": "",
+              "lead_picture": "https://d2uolguxr56s4e.cloudfront.net/img/shared/default_user.png",
+              "score": "0",
+              "source": "manual",
+              "source_id": "interface",
+              "ip_country": "",
+              "website": "",
+              "facebook": "",
+              "twitter": "",
+              "linkedin": "",
+              "instagram": "",
+              "referring_id": "0",
+              "blacklisted": "0",
+              "gdpr_lead_status": "4",
+              "gdpr_lead_status_date": "2023-02-02 10:37:47",
+              "gdpr_lead_communications": "1",
+              "gdpr_lead_status_ip": "",
+              "lead_preferred_time_zone": "America/New_York",
+              "custom_fields": []
+            }
+          }
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF": {
+      "main": [
+        [
+          {
+            "node": "GenPinData",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GenPinData": {
+      "main": [
+        [
+          {
+            "node": "HashEMail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Body": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HashEMail": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "IF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Settings": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "saveManualExecutions": false,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "ea36e328-c969-4faf-b16c-a16a76514b78",
+  "id": "2",
+  "meta": {
+    "instanceId": "d0a4630637cba49181281deed36546ce9853033204285289b97ce2d169d56efe"
+  },
+  "tags": []
+}
